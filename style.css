@@ -3,3 +3,49 @@ body {
     font-family:sans-serif;
     margin: 0;
 }
+
+#navegacao {
+    background-color: white;
+    height: 3rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+#navegacao a {
+    text-decoration: none;
+    color: black;
+}
+
+#navegacao a:hover {
+    color: green;
+}
+
+#logo {
+    width: 10%;
+    text-align: center;
+}
+
+#lista_navegacao {
+    list-style-type: none;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    gap: 2rem;
+    width: 80%;
+}
+
+#entrar {
+    list-style-type: none;
+    width: 10%;
+    text-align: center;
+}
+
+#rodape {
+    display: flex;
+    justify-content: center;
+}
