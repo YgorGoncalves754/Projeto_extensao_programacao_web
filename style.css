@@ -1,29 +1,37 @@
+html {
+  scrollbar-width: thin; /* Opções: auto, thin, none */
+  scrollbar-color: #2E6F40 #222222; /* Cor da barra (amarelo) e cor do fundo */
+}
+
 body {
-    background-color: grey;
     font-family:sans-serif;
     margin: 0;
+    scrollbar-gutter: stable both-edges;
 }
 
 #navegacao {
-    background-color: white;
-    height: 3rem;
+    background-color: black;
+    color: white;
+    height: 6rem;
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: 1.3rem;
+    height: 4rem;
+    padding-left: .6rem;
 }
 #navegacao a {
     text-decoration: none;
-    color: black;
+    color: white;
 }
 
 #navegacao a:hover {
     color: green;
 }
 
-#logo {
+#espaco {
     width: 10%;
     text-align: center;
 }
@@ -45,7 +53,20 @@ body {
     text-align: center;
 }
 
+main {
+    padding-left: .6rem;
+    background-image: 
+        linear-gradient(to top, transparent 70%, rgba(0, 0, 0, 0.6) 85%, rgba(0, 0, 0, 1) 100%), 
+        url('imgs/Fundo.jpg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 49rem;
+}
+
 #rodape {
+    padding-left: .6rem;
+    background-color: black;
+    color: white;
     display: flex;
     justify-content: center;
 }
