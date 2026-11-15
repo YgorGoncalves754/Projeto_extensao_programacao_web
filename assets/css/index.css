@@ -7,6 +7,11 @@ body {
     font-family:sans-serif;
     margin: 0;
     scrollbar-gutter: stable both-edges;
+
+    /* Faz o body ocupar no mínimo a altura inteira da tela e empilha header, main e footer */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 #navegacao {
@@ -70,7 +75,7 @@ main {
     background-repeat: no-repeat;
     background-size: cover;
 
-    height: 49rem;
+    flex: 1;
 
     display: flex;
     flex-direction: row;
@@ -81,7 +86,7 @@ main {
 #menu-mapa {
     background-color: white;
 
-    height: 80%;
+    height: 75vh;
     width: 50%;
 
     border: black solid;
