@@ -1,0 +1,144 @@
+html {
+  scrollbar-width: thin; /* Opções: auto, thin, none */
+  scrollbar-color: #2E6F40 #222222; /* Cor da barra (verde) e cor do fundo */
+}
+
+body {
+    font-family:sans-serif;
+    margin: 0;
+    scrollbar-gutter: stable both-edges;
+}
+
+#navegacao {
+    background-color: black;
+    color: white;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    font-weight: bold;
+    font-size: 1.3rem;
+
+    height: 4rem;
+
+    padding-left: .6rem;
+}
+
+#navegacao a {
+    text-decoration: none;
+    color: white;
+
+    &:hover {
+        color: green;
+    }
+}
+
+#espaco {
+    width: 10%;
+    text-align: center;
+}
+
+#lista_navegacao {
+    list-style-type: none;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+    gap: 2rem;
+    width: 80%;
+}
+
+#entrar {
+    list-style-type: none;
+
+    width: 10%;
+
+    text-align: center;
+}
+
+main {
+    padding-left: .6rem;
+
+    background-image:
+        linear-gradient(to top, transparent 70%, rgba(0, 0, 0, 0.6) 85%, rgba(0, 0, 0, 1) 100%),
+        url('../images/fundo.jpg');
+    background-repeat: no-repeat;
+    background-size: cover;
+
+    height: 49rem;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+#menu-mapa {
+    background-color: white;
+
+    height: 80%;
+    width: 50%;
+
+    border: black solid;
+
+    padding: 15px;
+    box-sizing: border-box;
+
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#mapa {
+    flex: 1;          /* ocupa todo o espaço que sobrar */
+    min-height: 0;    /* evita estourar o container */
+    width: 100%;
+
+    border: black solid;
+    box-sizing: border-box;
+}
+
+#menu-acoes {
+    flex: 0 0 auto;   /* altura só do conteúdo (os botões) */
+
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    gap: 20px;
+}
+
+#menu-acoes button {
+    padding: .8rem 1rem;   /* no lugar de height/width fixos*/
+
+    background-color: rgb(83, 138, 220);
+
+    border: none;
+    border-radius: 14px;
+
+    cursor: pointer;
+
+    &:hover {
+        background-color: blue;
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+}
+
+#rodape {
+    padding-left: .6rem;
+
+    background-color: black;
+    color: white;
+
+    display: flex;
+    justify-content: center;
+}
