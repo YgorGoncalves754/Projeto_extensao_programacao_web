@@ -25,24 +25,23 @@
     <main>
         <div id="menu-mapa">
             <div id="mapa">
-
             </div>
             <div id="menu-acoes">
-                <button>Adicionar Local</button>
+                <button id="btn-adicionar-local" type="button">Adicionar Local</button>
             </div>
         </div>
 
         <aside id="pontos-cadastrados">
-
         </aside>
     </main>
 
     <footer id="rodape">
         <p>&copy 2026 Ygor Gonçalves e Gabriel Koch da Silva. Todos os direitos reservados.</p>
     </footer>
+
     <script src="assets/js/map.js"></script>
     <script
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDecZ62iiTMV0Nkm5lS1EMNvAr5R-RMcx8&callback=initMap&v=weekly"
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDecZ62iiTMV0Nkm5lS1EMNvAr5R-RMcx8&callback=initMap&v=weekly&libraries=marker"
         async
         defer>
     </script>
