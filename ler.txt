@@ -1,3 +1,0 @@
-se n quiser fazer alguma coisa com login so tirar a colunas e tabela de usuarios do sql
-
-
