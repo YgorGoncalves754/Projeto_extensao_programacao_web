@@ -1,4 +1,3 @@
-
 // Região aproximada de Rio do Sul e arredores.
 const LIMITES_REGIAO = {
     north: -26.85,
@@ -15,6 +14,9 @@ const CENTRO_RIO_DO_SUL = {
 
 let mapa = null;
 let marcadores = [];
+
+// Marcador vermelho temporário: mostra o local escolhido antes de salvar.
+let marcadorSelecao = null;
 
 function initMap() {
     const divMapa = document.getElementById("mapa");
@@ -41,9 +43,11 @@ function initMap() {
         // Zoom inicial.
         zoom: 11,
 
-        // Impede movimentar o mapa, mas permite alterar o zoom.
-        draggable: false,
-        keyboardShortcuts: false,
+        // Permite arrastar o mapa e dar zoom; a navegação fica limitada
+        // à região definida em "restriction" abaixo.
+        draggable: true,
+        gestureHandling: "greedy",
+        keyboardShortcuts: true,
         scrollwheel: true,
         zoomControl: true,
         disableDoubleClickZoom: false,
@@ -57,17 +61,86 @@ function initMap() {
 
     configurarFormulario();
 
+    // Clique no mapa: posiciona o marcador vermelho e envia as coordenadas ao formulário.
     mapa.addListener("click", function (evento) {
         if (!evento.latLng) {
             return;
         }
 
-        const latitude = evento.latLng.lat().toFixed(7);
-        const longitude = evento.latLng.lng().toFixed(7);
-
-        document.getElementById("latitude").value = latitude;
-        document.getElementById("longitude").value = longitude;
+        selecionarLocalizacao(evento.latLng);
     });
+}
+
+/**
+ * Cria um PinElement vermelho.
+ */
+function criarPinVermelho() {
+    const pin = new google.maps.marker.PinElement({
+        background: "#EA4335",
+        borderColor: "#B31412",
+        glyphColor: "#FFFFFF"
+    });
+
+    // Em versões mais recentes o PinElement já é o próprio elemento HTML.
+    return pin.element || pin;
+}
+
+/**
+ * Preenche os campos de latitude/longitude do formulário.
+ */
+function preencherCoordenadas(lat, lng) {
+    document.getElementById("latitude").value = Number(lat).toFixed(7);
+    document.getElementById("longitude").value = Number(lng).toFixed(7);
+}
+
+/**
+ * Lê lat/lng de uma posição, que pode ser LatLng ou literal {lat, lng}.
+ */
+function lerPosicao(pos) {
+    return {
+        lat: typeof pos.lat === "function" ? pos.lat() : pos.lat,
+        lng: typeof pos.lng === "function" ? pos.lng() : pos.lng
+    };
+}
+
+/**
+ * Coloca (ou move) o marcador vermelho de seleção e atualiza o formulário.
+ */
+function selecionarLocalizacao(latLng) {
+    const { lat, lng } = lerPosicao(latLng);
+
+    if (!marcadorSelecao) {
+        marcadorSelecao = new google.maps.marker.AdvancedMarkerElement({
+            map: mapa,
+            position: { lat: lat, lng: lng },
+            title: "Local selecionado (arraste para ajustar)",
+            content: criarPinVermelho(),
+            gmpDraggable: true
+        });
+
+        // Ao arrastar o marcador, as coordenadas do formulário acompanham.
+        marcadorSelecao.addListener("dragend", function () {
+            const posicao = lerPosicao(marcadorSelecao.position);
+            preencherCoordenadas(posicao.lat, posicao.lng);
+        });
+    } else {
+        marcadorSelecao.position = { lat: lat, lng: lng };
+    }
+
+    preencherCoordenadas(lat, lng);
+}
+
+/**
+ * Remove o marcador de seleção e limpa o formulário.
+ */
+function limparSelecao() {
+    if (marcadorSelecao) {
+        marcadorSelecao.map = null;
+        marcadorSelecao = null;
+    }
+
+    document.getElementById("latitude").value = "";
+    document.getElementById("longitude").value = "";
 }
 
 // Configura o envio do formulário.
@@ -83,6 +156,13 @@ function configurarFormulario() {
     if (!formulario) {
         console.warn("Formulário de cadastro não encontrado.");
         return;
+    }
+
+    if (botaoCancelar) {
+        botaoCancelar.addEventListener("click", function () {
+            formulario.reset();
+            limparSelecao();
+        });
     }
 
     formulario.addEventListener("submit", async function (evento) {
@@ -114,7 +194,21 @@ function configurarFormulario() {
                 body: JSON.stringify(dados)
             });
 
-            const resultado = await resposta.json();
+            // Lê como texto primeiro: se o PHP falhar e devolver algo que não
+            // é JSON, mostramos o erro real em vez de uma mensagem genérica.
+            const texto = await resposta.text();
+            let resultado;
+
+            try {
+                resultado = JSON.parse(texto);
+            } catch (e) {
+                console.error("Resposta não-JSON do servidor:", resposta.status, texto);
+                alert(
+                    "O servidor retornou um erro (HTTP " + resposta.status + "). " +
+                    "Veja o console (F12) e o log do PHP."
+                );
+                return;
+            }
 
             if (!resposta.ok || !resultado.sucesso) {
                 alert(
@@ -126,7 +220,10 @@ function configurarFormulario() {
 
             const ponto = resultado.ponto;
 
-            // Adiciona o marcador após o cadastro bem-sucedido.
+            // Troca o marcador temporário pelo definitivo e limpa o formulário.
+            limparSelecao();
+            formulario.reset();
+
             adicionarMarcador(
                 ponto.latitude,
                 ponto.longitude,
@@ -166,22 +263,15 @@ function adicionarMarcador(latitude, longitude, titulo = "Ponto cadastrado") {
         return null;
     }
 
-    const pin = new google.maps.marker.PinElement({
-        background: "#EA4335",
-        borderColor: "#B31412",
-        glyphColor: "#FFFFFF"
-    });
-
     const marcador = new google.maps.marker.AdvancedMarkerElement({
         map: mapa,
         position: {
             lat: lat,
             lng: lng
         },
-        title: titulo
+        title: titulo,
+        content: criarPinVermelho()
     });
-
-    marcador.append(pin);
 
     marcadores.push(marcador);
 

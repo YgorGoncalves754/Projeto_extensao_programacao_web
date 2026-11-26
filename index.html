@@ -46,9 +46,9 @@
                             placeholder="Descrição do ponto turístico"
                         ></textarea>
 
-                        <!-- Coordenadas ocultas: continuam disponíveis para o JavaScript -->
-                        <input type="hidden" id="latitude">
-                        <input type="hidden" id="longitude">
+                        <!-- Preenchidos automaticamente ao clicar no mapa -->
+                        <input type="text" id="latitude" placeholder="Latitude (clique no mapa)" readonly hidden>
+                        <input type="text" id="longitude" placeholder="Longitude (clique no mapa)" readonly hidden>
 
                         <button type="submit">Adicionar</button>
                     </form>

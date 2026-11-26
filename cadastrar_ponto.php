@@ -3,6 +3,14 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/conexao.php';
 
+// Conta caracteres UTF-8 sem exigir a extensão mbstring (no Fedora ela é um pacote à parte).
+function tamanho_texto(string $texto): int
+{
+    return function_exists('mb_strlen')
+        ? mb_strlen($texto, 'UTF-8')
+        : (int) preg_match_all('/./us', $texto);
+}
+
 function responder(int $status, array $dados): void
 {
     http_response_code($status);
@@ -29,7 +37,7 @@ if ($nome === '') {
     responder(422, ['sucesso' => false, 'mensagem' => 'Informe o nome do ponto turístico.']);
 }
 
-if (mb_strlen($nome) > 150) {
+if (tamanho_texto($nome) > 150) {
     responder(422, ['sucesso' => false, 'mensagem' => 'O nome deve ter no máximo 150 caracteres.']);
 }
 

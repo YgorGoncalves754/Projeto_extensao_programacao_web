@@ -9,16 +9,15 @@ CREATE DATABASE turismo
     CONNECTION LIMIT = -1
     IS_TEMPLATE = False;
 
-\c turismo
-
 CREATE TABLE tb_pontos_turisticos (
 	id_ponto_turistico  BIGINT GENERATED ALWAYS AS IDENTITY,
 	nome_ponto		    VARCHAR (150) NOT NULL,
 	descricao_ponto     TEXT,
 	latitude		    DECIMAL(10,7) NOT NULL,
 	longitude		    DECIMAL(10,7) NOT NULL,
-	dt_criacao			TIMESTAMP NOT NULL SET DEFAULT CURRENT_TIMESTAMP,
+	dt_criacao			TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
 	CONSTRAINT pk_ponto_turistico
-		PRIMARY KEY (id_ponto_turistico),
+		PRIMARY KEY (id_ponto_turistico)
 );
+
