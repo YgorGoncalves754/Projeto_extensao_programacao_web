@@ -161,7 +161,6 @@ function criarPinVermelho() {
         glyphColor: "#FFFFFF"
     });
 
-    // Em versões mais recentes o PinElement já é o próprio elemento HTML.
     return pin.element || pin;
 }
 
