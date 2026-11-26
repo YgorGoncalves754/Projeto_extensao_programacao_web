@@ -19,7 +19,4 @@ try {
     );
 } catch (PDOException $e) {
     error_log($e->getMessage());
-    http_response_code(500);
-    header('Content-Type: application/json; charset=utf-8');
-    die(json_encode(['sucesso' => false, 'mensagem' => 'Erro ao conectar ao banco de dados.'], JSON_UNESCAPED_UNICODE));
 }
