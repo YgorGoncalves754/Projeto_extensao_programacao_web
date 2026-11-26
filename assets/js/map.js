@@ -69,6 +69,86 @@ function initMap() {
 
         selecionarLocalizacao(evento.latLng);
     });
+
+    // Ao abrir o site, busca os pontos salvos no banco e mostra na tela.
+    carregarPontos();
+}
+
+/**
+ * Busca os pontos no banco (listar_pontos.php) e desenha marcadores + lista.
+ */
+async function carregarPontos() {
+    const lista = document.getElementById("pontos-cadastrados");
+
+    try {
+        const resposta = await fetch("listar_pontos.php");
+        const resultado = await resposta.json();
+
+        if (!resposta.ok || !resultado.sucesso) {
+            throw new Error(resultado.mensagem || "Erro ao carregar os pontos.");
+        }
+
+        limparMarcadores();
+        if (lista) {
+            lista.replaceChildren();
+        }
+
+        resultado.pontos.forEach(adicionarPonto);
+
+        if (lista && resultado.pontos.length === 0) {
+            lista.textContent = "Nenhum ponto turístico cadastrado ainda.";
+        }
+    } catch (erro) {
+        console.error("Erro ao carregar pontos:", erro);
+        if (lista) {
+            lista.textContent = "Não foi possível carregar os pontos turísticos.";
+        }
+    }
+}
+
+/**
+ * Mostra um ponto no mapa (marcador) e na lateral (lista).
+ */
+function adicionarPonto(ponto) {
+    const marcador = adicionarMarcador(
+        ponto.latitude,
+        ponto.longitude,
+        ponto.nome_ponto
+    );
+
+    const lista = document.getElementById("pontos-cadastrados");
+    if (!lista) {
+        return;
+    }
+
+    // Remove a mensagem de "nenhum ponto" se ela estiver lá.
+    if (!lista.querySelector(".ponto-item")) {
+        lista.replaceChildren();
+    }
+
+    const item = document.createElement("article");
+    item.className = "ponto-item";
+
+    const titulo = document.createElement("h3");
+    titulo.textContent = ponto.nome_ponto;
+    item.appendChild(titulo);
+
+    if (ponto.descricao_ponto) {
+        const descricao = document.createElement("p");
+        descricao.textContent = ponto.descricao_ponto;
+        item.appendChild(descricao);
+    }
+
+    // Clicar no item leva o mapa até o ponto.
+    item.addEventListener("click", function () {
+        if (!marcador) {
+            return;
+        }
+        mapa.panTo(marcador.position);
+        mapa.setZoom(16);
+    });
+
+    lista.prepend(item);
 }
 
 /**
@@ -224,11 +304,7 @@ function configurarFormulario() {
             limparSelecao();
             formulario.reset();
 
-            adicionarMarcador(
-                ponto.latitude,
-                ponto.longitude,
-                ponto.nome_ponto
-            );
+            adicionarPonto(ponto);
 
             alert(resultado.mensagem);
 
