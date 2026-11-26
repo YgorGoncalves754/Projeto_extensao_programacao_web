@@ -1,0 +1,213 @@
+diff --git a/assets/css/style.css b/assets/css/style.css
+index c082ba9..18ed47c 100644
+--- a/assets/css/style.css
++++ b/assets/css/style.css
+@@ -217,3 +217,64 @@ main {
+     display: flex;
+     justify-content: center;
+ }
++
++/* Lista de pontos turísticos carregados do banco */
++/* Envolve o mapa: ocupa exatamente o espaço que o #mapa ocupava antes
++   e serve de referência para posicionar a lista ao lado. */
++#area-mapa {
++    flex: 1;
++    min-height: 0;
++    position: relative;
++    display: flex;
++    flex-direction: column;
++}
++
++/* Retângulo invisível ao lado do mapa: mesma altura do mapa (top: 0 / bottom: 0).
++   Por ser absoluto, não altera o tamanho nem a posição do mapa, e rola junto
++   com a página. Se houver muitos pontos, a rolagem fica só dentro dele. */
++#pontos-cadastrados {
++    position: absolute;
++    top: 0;
++    bottom: 0;
++    left: calc(100% + 18px + 1rem);  /* borda + padding do #menu-mapa + respiro */
++    width: min(20vw, 340px);
++    overflow-y: auto;
++    scrollbar-width: thin;
++    color: white;
++    text-shadow: 0 0 4px black;      /* legível sobre a imagem de fundo (mensagens de aviso) */
++}
++
++/* Telas estreitas: sem espaço lateral, a lista passa para baixo do mapa. */
++@media (max-width: 1000px) {
++    #pontos-cadastrados {
++        position: static;
++        flex: 0 0 auto;
++        width: auto;
++        max-height: 25vh;
++        margin-top: 1rem;
++    }
++}
++
++#pontos-cadastrados .ponto-item {
++    text-shadow: none;               /* a sombra do contêiner é só para as mensagens de aviso */
++    padding: 12px 16px;
++    margin-bottom: 8px;
++    border-radius: 8px;
++    background: rgba(255, 255, 255, 0.9);
++    color: #222;
++    cursor: pointer;
++}
++
++#pontos-cadastrados .ponto-item:hover {
++    background: #fff;
++}
++
++#pontos-cadastrados .ponto-item h3 {
++    margin: 0 0 4px;
++    font-size: 1rem;
++}
++
++#pontos-cadastrados .ponto-item p {
++    margin: 0;
++    font-size: 0.9rem;
++}
+diff --git a/assets/js/map.js b/assets/js/map.js
+index 141f70e..c08f888 100644
+--- a/assets/js/map.js
++++ b/assets/js/map.js
+@@ -69,6 +69,97 @@ function initMap() {
+ 
+         selecionarLocalizacao(evento.latLng);
+     });
++
++    // Ao abrir o site, busca os pontos salvos no banco e mostra na tela.
++    carregarPontos();
++}
++
++/**
++ * Busca os pontos no banco (listar_pontos.php) e desenha marcadores + lista.
++ */
++async function carregarPontos() {
++    const lista = document.getElementById("pontos-cadastrados");
++
++    try {
++        const resposta = await fetch("listar_pontos.php");
++        const texto = await resposta.text();
++        console.log("listar_pontos.php -> HTTP", resposta.status, texto.slice(0, 300));
++
++        let resultado;
++        try {
++            resultado = JSON.parse(texto);
++        } catch (e) {
++            throw new Error(
++                "O servidor não devolveu JSON (HTTP " + resposta.status + "). " +
++                "O site está sendo aberto por um servidor PHP e o arquivo listar_pontos.php existe?"
++            );
++        }
++
++        if (!resposta.ok || !resultado.sucesso) {
++            throw new Error(resultado.mensagem || "Erro ao carregar os pontos.");
++        }
++
++        limparMarcadores();
++        if (lista) {
++            lista.replaceChildren();
++        }
++
++        resultado.pontos.forEach(adicionarPonto);
++
++        if (lista && resultado.pontos.length === 0) {
++            lista.textContent = "Nenhum ponto turístico cadastrado ainda.";
++        }
++    } catch (erro) {
++        console.error("Erro ao carregar pontos:", erro);
++        if (lista) {
++            lista.textContent = "Não foi possível carregar os pontos turísticos.";
++        }
++    }
++}
++
++/**
++ * Mostra um ponto no mapa (marcador) e na lateral (lista).
++ */
++function adicionarPonto(ponto) {
++    const marcador = adicionarMarcador(
++        ponto.latitude,
++        ponto.longitude,
++        ponto.nome_ponto
++    );
++
++    const lista = document.getElementById("pontos-cadastrados");
++    if (!lista) {
++        return;
++    }
++
++    // Remove a mensagem de "nenhum ponto" se ela estiver lá.
++    if (!lista.querySelector(".ponto-item")) {
++        lista.replaceChildren();
++    }
++
++    const item = document.createElement("article");
++    item.className = "ponto-item";
++
++    const titulo = document.createElement("h3");
++    titulo.textContent = ponto.nome_ponto;
++    item.appendChild(titulo);
++
++    if (ponto.descricao_ponto) {
++        const descricao = document.createElement("p");
++        descricao.textContent = ponto.descricao_ponto;
++        item.appendChild(descricao);
++    }
++
++    // Clicar no item leva o mapa até o ponto.
++    item.addEventListener("click", function () {
++        if (!marcador) {
++            return;
++        }
++        mapa.panTo(marcador.position);
++        mapa.setZoom(16);
++    });
++
++    lista.prepend(item);
+ }
+ 
+ /**
+@@ -224,11 +315,7 @@ function configurarFormulario() {
+             limparSelecao();
+             formulario.reset();
+ 
+-            adicionarMarcador(
+-                ponto.latitude,
+-                ponto.longitude,
+-                ponto.nome_ponto
+-            );
++            adicionarPonto(ponto);
+ 
+             alert(resultado.mensagem);
+ 
+diff --git a/index.html b/index.html
+index 2d36d23..ada3cad 100644
+--- a/index.html
++++ b/index.html
+@@ -28,7 +28,13 @@
+         </div>
+         <button id="botaoComecar" onclick="descerTela()">Iniciar</button>
+         <div id="menu-mapa">
+-            <div id="mapa">
++            <div id="area-mapa">
++                <div id="mapa">
++                </div>
++
++                <!-- Fica ao lado do mapa, com a mesma altura dele -->
++                <aside id="pontos-cadastrados">
++                </aside>
+             </div>
+                 <div id="menu-acoes">
+                     <form id="form-cadastro-ponto">
+@@ -53,9 +59,6 @@
+                     </form>
+                 </div>
+         </div>
+-
+-        <aside id="pontos-cadastrados">
+-        </aside>
+     </main>
+ 
+     <footer id="rodape">

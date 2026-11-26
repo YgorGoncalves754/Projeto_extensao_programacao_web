@@ -219,7 +219,44 @@ main {
 }
 
 /* Lista de pontos turísticos carregados do banco */
+/* Envolve o mapa: ocupa exatamente o espaço que o #mapa ocupava antes
+   e serve de referência para posicionar a lista ao lado. */
+#area-mapa {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Retângulo invisível ao lado do mapa: mesma altura do mapa (top: 0 / bottom: 0).
+   Por ser absoluto, não altera o tamanho nem a posição do mapa, e rola junto
+   com a página. Se houver muitos pontos, a rolagem fica só dentro dele. */
+#pontos-cadastrados {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(100% + 18px + 1rem);  /* borda + padding do #menu-mapa + respiro */
+    width: min(20vw, 340px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    color: white;
+    text-shadow: 0 0 4px black;      /* legível sobre a imagem de fundo (mensagens de aviso) */
+}
+
+/* Telas estreitas: sem espaço lateral, a lista passa para baixo do mapa. */
+@media (max-width: 1000px) {
+    #pontos-cadastrados {
+        position: static;
+        flex: 0 0 auto;
+        width: auto;
+        max-height: 25vh;
+        margin-top: 1rem;
+    }
+}
+
 #pontos-cadastrados .ponto-item {
+    text-shadow: none;               /* a sombra do contêiner é só para as mensagens de aviso */
     padding: 12px 16px;
     margin-bottom: 8px;
     border-radius: 8px;
