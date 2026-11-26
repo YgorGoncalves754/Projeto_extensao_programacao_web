@@ -16,7 +16,6 @@ if ($nome == '' || $latitude == '' || $longitude == '') {
 }
 
 try {
-    // Os ":nome", ":descricao"... são preenchidos no execute (evita SQL injection)
     $sql = 'INSERT INTO tb_pontos_turisticos (nome_ponto, descricao_ponto, latitude, longitude)
             VALUES (:nome, :descricao, :latitude, :longitude)
             RETURNING *';
