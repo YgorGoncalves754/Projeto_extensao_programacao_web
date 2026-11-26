@@ -13,7 +13,6 @@
             </div>
             <ul id="lista_navegacao">
                 <li><a href="index.html">Home</a></li>
-                <li><a href="avaliar.html">Avaliar</a></li>
                 <li><a href="sobre.html">Sobre</a></li>
             </ul>
             <div id="entrar">
@@ -64,7 +63,79 @@
     </footer>
 
     <script>
+        // Guarda a função que interrompe a rolagem em andamento (se houver).
+        let cancelarDescida = null;
 
+        // Desce lentamente até o mapa quando o botão "Iniciar" é clicado.
+        function descerTela() {
+            const DURACAO_MS = 2000; // quanto maior, mais lenta a descida
+
+            const destino = document.getElementById("menu-mapa");
+            if (!destino) {
+                return;
+            }
+
+            // Se já havia uma rolagem em andamento, interrompe antes de começar outra.
+            if (cancelarDescida) {
+                cancelarDescida();
+            }
+
+            const inicio = window.scrollY;
+            const limiteDaPagina = document.documentElement.scrollHeight - window.innerHeight;
+
+            // Posição que deixa o bloco do mapa centralizado na tela,
+            // sem passar do início nem do fim da página.
+            const centralizado = destino.getBoundingClientRect().top + inicio
+                - (window.innerHeight - destino.offsetHeight) / 2;
+            const fim = Math.min(Math.max(centralizado, 0), limiteDaPagina);
+            const distancia = fim - inicio;
+
+            if (Math.abs(distancia) < 1) {
+                return;
+            }
+
+            // Começa devagar, acelera no meio e desacelera ao chegar.
+            function suavizar(t) {
+                return t < 0.5
+                    ? 4 * t * t * t
+                    : 1 - Math.pow(-2 * t + 2, 3) / 2;
+            }
+
+            let idAnimacao = null;
+            let tempoInicial = null;
+            const eventosDoUsuario = ["wheel", "touchstart", "mousedown", "keydown"];
+
+            function cancelar() {
+                cancelAnimationFrame(idAnimacao);
+                eventosDoUsuario.forEach(function (evento) {
+                    window.removeEventListener(evento, cancelar);
+                });
+                cancelarDescida = null;
+            }
+
+            function passo(agora) {
+                if (tempoInicial === null) {
+                    tempoInicial = agora;
+                }
+
+                const progresso = Math.min((agora - tempoInicial) / DURACAO_MS, 1);
+                window.scrollTo(0, inicio + distancia * suavizar(progresso));
+
+                if (progresso < 1) {
+                    idAnimacao = requestAnimationFrame(passo);
+                } else {
+                    cancelar();
+                }
+            }
+
+            // Se o usuário rolar/tocar/digitar durante a descida, ele retoma o controle.
+            eventosDoUsuario.forEach(function (evento) {
+                window.addEventListener(evento, cancelar, { passive: true });
+            });
+            cancelarDescida = cancelar;
+
+            idAnimacao = requestAnimationFrame(passo);
+        }
     </script>
     <script src="assets/js/map.js"></script>
     <script
