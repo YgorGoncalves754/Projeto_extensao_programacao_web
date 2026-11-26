@@ -18,6 +18,44 @@ let marcadores = [];
 // Marcador vermelho temporário: mostra o local escolhido antes de salvar.
 let marcadorSelecao = null;
 
+// O Google chama esta função sozinho quando recusa a chave da API
+// (chave errada, sem permissão ou com restrição de domínio).
+window.gm_authFailure = function () {
+    alert("O Google Maps recusou a chave da API. Confira a chave e as restrições dela no Google Cloud Console.");
+};
+
+/**
+ * Chama um arquivo PHP e devolve o JSON já convertido.
+ * Os PHP sempre respondem com "sucesso" (true/false): é ele que decide se deu certo.
+ * Se algo der errado, lança um erro com a mensagem que deve aparecer para o usuário.
+ */
+async function chamarPhp(url, opcoes) {
+    let resposta;
+
+    try {
+        resposta = await fetch(url, opcoes);
+    } catch (e) {
+        throw new Error("Não foi possível comunicar com o servidor.");
+    }
+
+    const texto = await resposta.text();
+    let resultado;
+
+    try {
+        resultado = JSON.parse(texto);
+    } catch (e) {
+        // Não é JSON: arquivo não encontrado (404), erro do PHP, página sendo aberta sem servidor PHP...
+        console.error(url, "-> HTTP", resposta.status, "| resposta:", texto.slice(0, 300));
+        throw new Error("O servidor não devolveu JSON em " + url + " (HTTP " + resposta.status + "). Veja o console (F12).");
+    }
+
+    if (!resultado.sucesso) {
+        throw new Error(resultado.mensagem || "Erro ao chamar " + url + ".");
+    }
+
+    return resultado;
+}
+
 function initMap() {
     const divMapa = document.getElementById("mapa");
 
@@ -81,12 +119,7 @@ async function carregarPontos() {
     const lista = document.getElementById("pontos-cadastrados");
 
     try {
-        const resposta = await fetch("listar_pontos.php");
-        const resultado = await resposta.json();
-
-        if (!resposta.ok || !resultado.sucesso) {
-            throw new Error(resultado.mensagem || "Erro ao carregar os pontos.");
-        }
+        const resultado = await chamarPhp("listar_pontos.php");
 
         limparMarcadores();
         if (lista) {
@@ -101,7 +134,7 @@ async function carregarPontos() {
     } catch (erro) {
         console.error("Erro ao carregar pontos:", erro);
         if (lista) {
-            lista.textContent = "Não foi possível carregar os pontos turísticos.";
+            lista.textContent = erro.message;
         }
     }
 }
@@ -264,56 +297,25 @@ function configurarFormulario() {
         };
 
         try {
-            const resposta = await fetch("cadastrar_ponto.php", {
+            const resultado = await chamarPhp("cadastrar_ponto.php", {
                 method: "POST",
-
                 headers: {
                     "Content-Type": "application/json"
                 },
-
                 body: JSON.stringify(dados)
             });
-
-            // Lê como texto primeiro: se o PHP falhar e devolver algo que não
-            // é JSON, mostramos o erro real em vez de uma mensagem genérica.
-            const texto = await resposta.text();
-            let resultado;
-
-            try {
-                resultado = JSON.parse(texto);
-            } catch (e) {
-                console.error("Resposta não-JSON do servidor:", resposta.status, texto);
-                alert(
-                    "O servidor retornou um erro (HTTP " + resposta.status + "). " +
-                    "Veja o console (F12) e o log do PHP."
-                );
-                return;
-            }
-
-            if (!resposta.ok || !resultado.sucesso) {
-                alert(
-                    resultado.mensagem ||
-                    "Erro ao cadastrar o ponto."
-                );
-                return;
-            }
-
-            const ponto = resultado.ponto;
 
             // Troca o marcador temporário pelo definitivo e limpa o formulário.
             limparSelecao();
             formulario.reset();
 
-            adicionarPonto(ponto);
+            adicionarPonto(resultado.ponto);
 
             alert(resultado.mensagem);
 
         } catch (erro) {
-            console.error("Erro na requisição:", erro);
-
-            alert(
-                "Não foi possível comunicar com o servidor."
-            );
+            console.error("Erro ao cadastrar:", erro);
+            alert(erro.message);
         }
     });
 }
