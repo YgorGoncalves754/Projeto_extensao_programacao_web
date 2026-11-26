@@ -143,32 +143,55 @@ main {
 }
 
 #menu-acoes {
-    flex: 0 0 auto;   /* altura só do conteúdo (os botões) */
+    flex: 0 0 auto;
     display: flex;
-    flex-direction: row;
     justify-content: center;
     align-items: center;
-    gap: 20px;
+    width: 100%;
 }
 
-#menu-acoes button {
-    padding: .8rem 7rem;   /* no lugar de height/width fixos*/
+#form-cadastro-ponto {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+#form-cadastro-ponto input,
+#form-cadastro-ponto textarea {
+    width: 80%;
+    padding: 12px;
+    box-sizing: border-box;
+    border: 1px solid #aaa;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+}
+
+#form-cadastro-ponto textarea {
+    resize: vertical;
+    min-height: 70px;
+}
+
+#form-cadastro-ponto button {
+    padding: .8rem 7rem;
     background-color: rgb(83, 138, 220);
     border: none;
     border-radius: 14px;
-    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    font-family: 'Lucida Sans', sans-serif;
     font-size: larger;
     font-weight: bold;
     color: white;
     cursor: pointer;
+}
 
-    &:hover {
-        background-color: blue;
-    }
+#form-cadastro-ponto button:hover {
+    background-color: blue;
+}
 
-    &:active {
-        transform: scale(0.98);
-    }
+#form-cadastro-ponto button:active {
+    transform: scale(0.98);
 }
 
 #rodape {

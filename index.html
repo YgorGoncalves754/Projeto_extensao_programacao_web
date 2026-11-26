@@ -31,9 +31,28 @@
         <div id="menu-mapa">
             <div id="mapa">
             </div>
-            <div id="menu-acoes">
-                <button id="btn-adicionar-local" type="button">Adicionar Local</button>
-            </div>
+                <div id="menu-acoes">
+                    <form id="form-cadastro-ponto">
+                        <input
+                            type="text"
+                            id="nome"
+                            placeholder="Nome do ponto turístico"
+                            maxlength="150"
+                            required
+                        >
+
+                        <textarea
+                            id="descricao"
+                            placeholder="Descrição do ponto turístico"
+                        ></textarea>
+
+                        <!-- Coordenadas ocultas: continuam disponíveis para o JavaScript -->
+                        <input type="hidden" id="latitude">
+                        <input type="hidden" id="longitude">
+
+                        <button type="submit">Adicionar</button>
+                    </form>
+                </div>
         </div>
 
         <aside id="pontos-cadastrados">

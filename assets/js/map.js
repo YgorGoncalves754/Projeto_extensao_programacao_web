@@ -1,25 +1,32 @@
-const LIMITES_BRASIL = {
-    north: 5.27,
-    south: -33.75,
-    west: -73.99,
-    east: -34.79
+
+// Região aproximada de Rio do Sul e arredores.
+const LIMITES_REGIAO = {
+    north: -26.85,
+    south: -27.65,
+    west: -50.10,
+    east: -49.20
+};
+
+// Coordenadas aproximadas do centro de Rio do Sul.
+const CENTRO_RIO_DO_SUL = {
+    lat: -27.2145,
+    lng: -49.6430
 };
 
 let mapa = null;
-let modoAdicionarLocal = false;
-const marcadores = [];
+let marcadores = [];
 
 function initMap() {
     const divMapa = document.getElementById("mapa");
 
     const limites = new google.maps.LatLngBounds(
         {
-            lat: LIMITES_BRASIL.south,
-            lng: LIMITES_BRASIL.west
+            lat: LIMITES_REGIAO.south,
+            lng: LIMITES_REGIAO.west
         },
         {
-            lat: LIMITES_BRASIL.north,
-            lng: LIMITES_BRASIL.east
+            lat: LIMITES_REGIAO.north,
+            lng: LIMITES_REGIAO.east
         }
     );
 
@@ -28,75 +35,113 @@ function initMap() {
         mapTypeId: "satellite",
         mapId: "DEMO_MAP_ID",
 
-        // Centro aproximado do Brasil.
-        center: {
-            lat: -14.2350,
-            lng: -51.9253
-        },
+        // Centraliza o mapa em Rio do Sul.
+        center: CENTRO_RIO_DO_SUL,
 
-        // Zoom inicial para visualizar o Brasil inteiro.
-        zoom: 3,
+        // Zoom inicial.
+        zoom: 11,
 
-        // Permite navegar pela região do Brasil e arredores.
+        // Impede movimentar o mapa, mas permite alterar o zoom.
+        draggable: false,
+        keyboardShortcuts: false,
+        scrollwheel: true,
+        zoomControl: true,
+        disableDoubleClickZoom: false,
+
+        // Restringe a navegação à região configurada.
         restriction: {
             latLngBounds: limites,
-            strictBounds: false
+            strictBounds: true
         }
     });
 
-    configurarBotaoAdicionar();
+    configurarFormulario();
 
-    // Evento de clique no mapa.
     mapa.addListener("click", function (evento) {
-        if (!modoAdicionarLocal || !evento.latLng) {
+        if (!evento.latLng) {
             return;
         }
 
-        const latitude = evento.latLng.lat();
-        const longitude = evento.latLng.lng();
+        const latitude = evento.latLng.lat().toFixed(7);
+        const longitude = evento.latLng.lng().toFixed(7);
 
-        const marcador = adicionarMarcador(
-            latitude,
-            longitude,
-            "Novo ponto (ainda não salvo)"
-        );
-
-        if (marcador) {
-            modoAdicionarLocal = false;
-
-            const botao = document.getElementById(
-                "btn-adicionar-local"
-            );
-
-            if (botao) {
-                botao.textContent = "Adicionar Local";
-            }
-
-            console.log("Marcador criado:", {
-                latitude: latitude,
-                longitude: longitude
-            });
-        }
+        document.getElementById("latitude").value = latitude;
+        document.getElementById("longitude").value = longitude;
     });
 }
 
-// Configura o botão de adicionar localização.
-function configurarBotaoAdicionar() {
-    const botao = document.getElementById(
-        "btn-adicionar-local"
+// Configura o envio do formulário.
+function configurarFormulario() {
+    const formulario = document.getElementById(
+        "form-cadastro-ponto"
     );
 
-    if (!botao) {
-        console.warn("Botão de adicionar local não encontrado.");
+    const botaoCancelar = document.getElementById(
+        "btn-cancelar-cadastro"
+    );
+
+    if (!formulario) {
+        console.warn("Formulário de cadastro não encontrado.");
         return;
     }
 
-    botao.addEventListener("click", function () {
-        modoAdicionarLocal = !modoAdicionarLocal;
+    formulario.addEventListener("submit", async function (evento) {
+        evento.preventDefault();
 
-        botao.textContent = modoAdicionarLocal
-            ? "Cancelar seleção"
-            : "Adicionar Local";
+        const latitude = document.getElementById("latitude").value;
+        const longitude = document.getElementById("longitude").value;
+
+        if (!latitude || !longitude) {
+            alert("Selecione uma localização no mapa antes de cadastrar.");
+            return;
+        }
+
+        const dados = {
+            nome: document.getElementById("nome").value,
+            descricao: document.getElementById("descricao").value,
+            latitude: document.getElementById("latitude").value,
+            longitude: document.getElementById("longitude").value
+        };
+
+        try {
+            const resposta = await fetch("cadastrar_ponto.php", {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify(dados)
+            });
+
+            const resultado = await resposta.json();
+
+            if (!resposta.ok || !resultado.sucesso) {
+                alert(
+                    resultado.mensagem ||
+                    "Erro ao cadastrar o ponto."
+                );
+                return;
+            }
+
+            const ponto = resultado.ponto;
+
+            // Adiciona o marcador após o cadastro bem-sucedido.
+            adicionarMarcador(
+                ponto.latitude,
+                ponto.longitude,
+                ponto.nome_ponto
+            );
+
+            alert(resultado.mensagem);
+
+        } catch (erro) {
+            console.error("Erro na requisição:", erro);
+
+            alert(
+                "Não foi possível comunicar com o servidor."
+            );
+        }
     });
 }
 
@@ -107,11 +152,7 @@ function configurarBotaoAdicionar() {
  * @param {number|string} longitude
  * @param {string} titulo
  */
-function adicionarMarcador(
-    latitude,
-    longitude,
-    titulo = "Ponto cadastrado"
-) {
+function adicionarMarcador(latitude, longitude, titulo = "Ponto cadastrado") {
     if (!mapa) {
         console.error("O mapa ainda não foi inicializado.");
         return null;
@@ -121,9 +162,15 @@ function adicionarMarcador(
     const lng = Number(longitude);
 
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-        console.error("Coordenadas inválidas.");
+        console.error("Coordenadas inválidas:", latitude, longitude);
         return null;
     }
+
+    const pin = new google.maps.marker.PinElement({
+        background: "#EA4335",
+        borderColor: "#B31412",
+        glyphColor: "#FFFFFF"
+    });
 
     const marcador = new google.maps.marker.AdvancedMarkerElement({
         map: mapa,
@@ -133,6 +180,8 @@ function adicionarMarcador(
         },
         title: titulo
     });
+
+    marcador.append(pin);
 
     marcadores.push(marcador);
 
@@ -147,11 +196,11 @@ function limparMarcadores() {
         marcador.map = null;
     });
 
-    marcadores.length = 0;
+    marcadores = [];
 }
 
 /**
- * Retorna os limites da região visível no mapa.
+ * Retorna os limites da região atualmente visível no mapa.
  */
 function getViewPort() {
     if (!mapa) {
